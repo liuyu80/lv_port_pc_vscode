@@ -53,7 +53,10 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 
 # Find and include SDL2 library
-find_package(SDL2 REQUIRED)
+set(SDL2_ROOT_DIR ${CMAKE_SOURCE_DIR}/SDL2-2.30.10/x86_64-w64-mingw32)
+list(APPEND CMAKE_PREFIX_PATH ${SDL2_ROOT_DIR}/lib/cmake)
+set(SDL2_NO_MWINDOWS 1) # 设置为0的话不显示控制台,也就看不到打印信息
+find_package(SDL2 REQUIRED SDL2)
 
 # Add compile definitions based on the selected options
 add_compile_definitions($<$<BOOL:${LV_USE_DRAW_SDL}>:LV_USE_DRAW_SDL=1>)
@@ -122,6 +125,13 @@ add_executable(main ${MAIN_SOURCES})
 target_compile_definitions(main PRIVATE LV_CONF_INCLUDE_SIMPLE)
 target_link_libraries(main ${MAIN_LIBS})
 
+# Copy SDL2.dll to output directory
+add_custom_command(
+    TARGET main  POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+    "${SDL2_ROOT_DIR}/bin/SDL2.dll" ${EXECUTABLE_OUTPUT_PATH}
+    )
+
 # On Windows, GUI applications do not show a console by default,
 # which hides log output. This ensures a console is available for logging.
 if (WIN32)
@@ -139,17 +149,17 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_options(lvgl PRIVATE
         -pedantic-errors
         -Wall
-        -Wclobbered
+        # -Wclobbered 注释掉
         -Wdeprecated
         -Wdouble-promotion
         -Wempty-body
         -Wextra
         -Wformat-security
-        -Wmaybe-uninitialized
+        # -Wmaybe-uninitialized 注释掉
         # -Wmissing-prototypes
         -Wpointer-arith
         -Wmultichar
-        -Wno-pedantic # ignored for now, we convert functions to pointers for properties table.
+        -Wno-pedantic # ignored for now, we convert functions to pointers for propertis table.
         -Wreturn-type
         -Wshadow
         -Wshift-negative-value
@@ -160,6 +170,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
         -Wunreachable-code
         -Wfloat-conversion
         -Wstrict-aliasing
+        -Wno-implicit-function-declaration #增加该项,不然会报memmove找不到
     )
 
 if (ASAN)

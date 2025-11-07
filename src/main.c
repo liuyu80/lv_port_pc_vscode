@@ -22,7 +22,7 @@
 #include "lvgl/lvgl.h"
 #include "lvgl/examples/lv_examples.h"
 #include "lvgl/demos/lv_demos.h"
-#include <SDL.h>
+#include LV_SDL_INCLUDE_PATH //包含SDL的头文件
 
 #include "hal/hal.h"
 
@@ -94,4 +94,3 @@ int main(int argc, char **argv)
 /**********************
  *   STATIC FUNCTIONS
  **********************/
-
