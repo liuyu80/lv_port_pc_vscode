@@ -52,11 +52,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 
-# Find and include SDL2 library
-set(SDL2_ROOT_DIR ${CMAKE_SOURCE_DIR}/SDL2-2.30.10/x86_64-w64-mingw32)
-list(APPEND CMAKE_PREFIX_PATH ${SDL2_ROOT_DIR}/lib/cmake)
+# Add SDL subdirectory and use the cloned SDL repository
+add_subdirectory(SDL)
 set(SDL2_NO_MWINDOWS 1) # 设置为0的话不显示控制台,也就看不到打印信息
-find_package(SDL2 REQUIRED SDL2)
+
+# Add SDL include directory to the main target
+include_directories(${PROJECT_SOURCE_DIR}/SDL/include)
+
 
 # Add compile definitions based on the selected options
 add_compile_definitions($<$<BOOL:${LV_USE_DRAW_SDL}>:LV_USE_DRAW_SDL=1>)
@@ -66,10 +68,10 @@ add_compile_definitions($<$<BOOL:${LV_USE_FFMPEG}>:LV_USE_FFMPEG=1>)
 
 # Add LVGL subdirectory
 add_subdirectory(lvgl)
-target_include_directories(lvgl PUBLIC ${PROJECT_SOURCE_DIR} ${SDL2_INCLUDE_DIRS})
+target_include_directories(lvgl PUBLIC ${PROJECT_SOURCE_DIR})
 
 set(MAIN_SOURCES src/mouse_cursor_icon.c src/hal/hal.c)
-set(MAIN_LIBS lvgl lvgl::examples lvgl::demos lvgl::thorvg ${SDL2_LIBRARIES})
+set(MAIN_LIBS lvgl lvgl::examples lvgl::demos lvgl::thorvg SDL2-static SDL2main)
 
 # Create the main executable, depending on the FreeRTOS option
 if(USE_FREERTOS)
@@ -125,12 +127,6 @@ add_executable(main ${MAIN_SOURCES})
 target_compile_definitions(main PRIVATE LV_CONF_INCLUDE_SIMPLE)
 target_link_libraries(main ${MAIN_LIBS})
 
-# Copy SDL2.dll to output directory
-add_custom_command(
-    TARGET main  POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy
-    "${SDL2_ROOT_DIR}/bin/SDL2.dll" ${EXECUTABLE_OUTPUT_PATH}
-    )
 
 # On Windows, GUI applications do not show a console by default,
 # which hides log output. This ensures a console is available for logging.
